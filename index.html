@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>내 스터디 블로그</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -817,14 +822,55 @@
     </div>
 
     <script>
+        // Firebase 초기화
+        const firebaseConfig = {
+            apiKey: "AIzaSyCEA_sXtgeZojR87uwkKGa0osLBU-qgpDg",
+            authDomain: "study-blog-21f70.firebaseapp.com",
+            projectId: "study-blog-21f70",
+            storageBucket: "study-blog-21f70.firebasestorage.app",
+            messagingSenderId: "42936437899",
+            appId: "1:42936437899:web:1e4148657d2b55da79588e",
+            measurementId: "G-PRV5M571VZ"
+        };
+
+        // Firebase 앱 초기화
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
         // 데이터 저장소
-        let posts = JSON.parse(localStorage.getItem('studyPosts')) || [];
-        let categories = JSON.parse(localStorage.getItem('studyCategories')) || ['Network', 'AI/ML', 'Data Analysis', 'AX'];
+        let posts = [];
+        let categories = ['Network', 'AI/ML', 'Data Analysis', 'AX'];
         let currentCategory = 'all';
         let editingPostId = null;
-        let likes = JSON.parse(localStorage.getItem('studyLikes')) || {};
-        let comments = JSON.parse(localStorage.getItem('studyComments')) || {};
         let currentUsername = localStorage.getItem('studyUsername') || generateRandomUsername();
+
+        // Firestore에서 데이터 로드
+        async function loadFromFirebase() {
+            try {
+                // 게시글 로드
+                const postsSnapshot = await db.collection('posts').orderBy('date', 'desc').get();
+                posts = postsSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                // 카테고리 로드
+                const categoriesDoc = await db.collection('settings').doc('categories').get();
+                if (categoriesDoc.exists) {
+                    categories = categoriesDoc.data().list || categories;
+                } else {
+                    // 기본 카테고리 저장
+                    await db.collection('settings').doc('categories').set({ list: categories });
+                }
+
+                renderCategories();
+                renderPosts();
+                updateCategoryCounts();
+            } catch (error) {
+                console.error('Firebase 로드 오류:', error);
+                alert('데이터를 불러오는 중 오류가 발생했습니다.');
+            }
+        }
 
         // 랜덤 사용자 이름 생성
         function generateRandomUsername() {
@@ -950,7 +996,7 @@
         }
 
         // 글 목록 렌더링
-        function renderPosts() {
+        async function renderPosts() {
             const postList = document.getElementById('postList');
             const postView = document.getElementById('postView');
             postList.style.display = 'grid';
@@ -970,17 +1016,19 @@
                 return;
             }
 
-            postList.innerHTML = filteredPosts.sort((a, b) => b.date - a.date).map(post => `
-                <div class="post-card" onclick="viewPost(${post.id})">
+            postList.innerHTML = filteredPosts.map(post => `
+                <div class="post-card" onclick="viewPost('${post.id}')">
                     <h3>${post.title}</h3>
                     <div class="post-meta">
                         <span>📁 ${post.category}</span>
                         <span>📅 ${new Date(post.date).toLocaleDateString('ko-KR')}</span>
+                        <span>❤️ ${post.likes || 0}</span>
+                        <span>💬 ${post.commentCount || 0}</span>
                     </div>
                     <p class="post-preview">${post.content.substring(0, 150)}${post.content.length > 150 ? '...' : ''}</p>
                     <div class="post-actions" onclick="event.stopPropagation()">
-                        <button class="btn btn-edit" onclick="editPost(${post.id})">수정</button>
-                        <button class="btn btn-delete" onclick="deletePost(${post.id})">삭제</button>
+                        <button class="btn btn-edit" onclick="editPost('${post.id}')">수정</button>
+                        <button class="btn btn-delete" onclick="deletePost('${post.id}')">삭제</button>
                     </div>
                 </div>
             `).join('');
@@ -1033,7 +1081,7 @@
         }
 
         // 글 보기
-        function viewPost(id) {
+        async function viewPost(id) {
             const post = posts.find(p => p.id === id);
             if (!post) return;
 
@@ -1043,8 +1091,10 @@
             postList.style.display = 'none';
             postView.style.display = 'block';
             
-            const postLikes = likes[id] || 0;
-            const postComments = comments[id] || [];
+            // Firestore에서 댓글 로드
+            const commentsSnapshot = await db.collection('posts').doc(id).collection('comments').orderBy('date', 'asc').get();
+            const postComments = commentsSnapshot.docs.map(doc => doc.data());
+            
             const hasLiked = localStorage.getItem(`liked_${id}`) === 'true';
             
             postView.innerHTML = `
@@ -1056,17 +1106,17 @@
                 </div>
                 <div class="content">${parseMarkdown(post.content)}</div>
                 <div class="post-actions" style="margin-top: 30px;">
-                    <button class="btn btn-edit" onclick="editPost(${post.id})">수정</button>
-                    <button class="btn btn-delete" onclick="deletePost(${post.id})">삭제</button>
+                    <button class="btn btn-edit" onclick="editPost('${post.id}')">수정</button>
+                    <button class="btn btn-delete" onclick="deletePost('${post.id}')">삭제</button>
                 </div>
 
                 <div class="post-engagement">
                     <div class="like-section">
-                        <button class="like-btn ${hasLiked ? 'liked' : ''}" onclick="toggleLike(${id})">
+                        <button class="like-btn ${hasLiked ? 'liked' : ''}" onclick="toggleLike('${id}')">
                             <span style="font-size: 1.3em;">${hasLiked ? '❤️' : '🤍'}</span>
                             <span>공감하기</span>
                         </button>
-                        <span class="like-count">공감 <strong>${postLikes}</strong>개</span>
+                        <span class="like-count">공감 <strong>${post.likes || 0}</strong>개</span>
                     </div>
 
                     <div class="comments-section">
@@ -1088,7 +1138,7 @@
                             <textarea class="comment-textarea" 
                                       id="commentText" 
                                       placeholder="댓글을 입력하세요..."></textarea>
-                            <button class="comment-submit" onclick="addComment(${id})">댓글 작성</button>
+                            <button class="comment-submit" onclick="addComment('${id}')">댓글 작성</button>
                         </div>
 
                         <div class="comments-list" id="commentsList">
@@ -1102,7 +1152,7 @@
                                         </div>
                                         <div>
                                             <span class="comment-date">${new Date(comment.date).toLocaleString('ko-KR')}</span>
-                                            <button class="comment-delete" onclick="deleteComment(${id}, ${idx})">삭제</button>
+                                            <button class="comment-delete" onclick="deleteComment('${id}', '${comment.id}')">삭제</button>
                                         </div>
                                     </div>
                                     <div class="comment-content">${comment.content}</div>
@@ -1142,45 +1192,52 @@
         }
 
         // 글 저장
-        document.getElementById('postForm').onsubmit = function(e) {
+        document.getElementById('postForm').onsubmit = async function(e) {
             e.preventDefault();
             
             const title = document.getElementById('postTitle').value;
             const category = document.getElementById('postCategory').value;
             const content = document.getElementById('postContent').value;
 
-            if (editingPostId !== null) {
-                // 수정
-                const post = posts.find(p => p.id === editingPostId);
-                post.title = title;
-                post.category = category;
-                post.content = content;
-                post.date = Date.now();
-            } else {
-                // 새 글
-                const newPost = {
-                    id: Date.now(),
-                    title,
-                    category,
-                    content,
-                    date: Date.now()
-                };
-                posts.push(newPost);
-            }
+            try {
+                if (editingPostId !== null) {
+                    // 수정
+                    await db.collection('posts').doc(editingPostId).update({
+                        title,
+                        category,
+                        content,
+                        date: Date.now()
+                    });
+                } else {
+                    // 새 글
+                    await db.collection('posts').add({
+                        title,
+                        category,
+                        content,
+                        date: Date.now(),
+                        likes: 0,
+                        commentCount: 0
+                    });
+                }
 
-            localStorage.setItem('studyPosts', JSON.stringify(posts));
-            closePostModal();
-            renderPosts();
-            updateCategoryCounts();
+                closePostModal();
+                await loadFromFirebase();
+            } catch (error) {
+                console.error('저장 오류:', error);
+                alert('글을 저장하는 중 오류가 발생했습니다.');
+            }
         };
 
         // 글 삭제
-        function deletePost(id) {
+        async function deletePost(id) {
             if (confirm('정말 삭제하시겠습니까?')) {
-                posts = posts.filter(p => p.id !== id);
-                localStorage.setItem('studyPosts', JSON.stringify(posts));
-                renderPosts();
-                updateCategoryCounts();
+                try {
+                    await db.collection('posts').doc(id).delete();
+                    await loadFromFirebase();
+                } catch (error) {
+                    console.error('삭제 오류:', error);
+                    alert('글을 삭제하는 중 오류가 발생했습니다.');
+                }
             }
         }
 
@@ -1254,23 +1311,33 @@
         }
 
         // 공감 토글
-        function toggleLike(postId) {
+        async function toggleLike(postId) {
             const hasLiked = localStorage.getItem(`liked_${postId}`) === 'true';
+            const post = posts.find(p => p.id === postId);
             
-            if (hasLiked) {
-                likes[postId] = (likes[postId] || 1) - 1;
-                localStorage.removeItem(`liked_${postId}`);
-            } else {
-                likes[postId] = (likes[postId] || 0) + 1;
-                localStorage.setItem(`liked_${postId}`, 'true');
+            try {
+                if (hasLiked) {
+                    await db.collection('posts').doc(postId).update({
+                        likes: firebase.firestore.FieldValue.increment(-1)
+                    });
+                    localStorage.removeItem(`liked_${postId}`);
+                } else {
+                    await db.collection('posts').doc(postId).update({
+                        likes: firebase.firestore.FieldValue.increment(1)
+                    });
+                    localStorage.setItem(`liked_${postId}`, 'true');
+                }
+                
+                await loadFromFirebase();
+                viewPost(postId);
+            } catch (error) {
+                console.error('공감 오류:', error);
+                alert('공감 처리 중 오류가 발생했습니다.');
             }
-            
-            localStorage.setItem('studyLikes', JSON.stringify(likes));
-            viewPost(postId);
         }
 
         // 댓글 추가
-        function addComment(postId) {
+        async function addComment(postId) {
             const username = document.getElementById('commentUsername').value.trim();
             const content = document.getElementById('commentText').value.trim();
             
@@ -1284,32 +1351,72 @@
                 return;
             }
             
-            if (!comments[postId]) {
-                comments[postId] = [];
+            try {
+                await db.collection('posts').doc(postId).collection('comments').add({
+                    author: username,
+                    content: content,
+                    date: Date.now(),
+                    id: Date.now().toString()
+                });
+
+                // 댓글 카운트 증가
+                await db.collection('posts').doc(postId).update({
+                    commentCount: firebase.firestore.FieldValue.increment(1)
+                });
+                
+                saveUsername(username);
+                await loadFromFirebase();
+                viewPost(postId);
+            } catch (error) {
+                console.error('댓글 추가 오류:', error);
+                alert('댓글을 작성하는 중 오류가 발생했습니다.');
             }
-            
-            comments[postId].push({
-                author: username,
-                content: content,
-                date: Date.now()
-            });
-            
-            localStorage.setItem('studyComments', JSON.stringify(comments));
-            saveUsername(username);
-            viewPost(postId);
         }
 
         // 댓글 삭제
-        function deleteComment(postId, commentIndex) {
+        async function deleteComment(postId, commentId) {
             if (confirm('댓글을 삭제하시겠습니까?')) {
-                comments[postId].splice(commentIndex, 1);
-                localStorage.setItem('studyComments', JSON.stringify(comments));
-                viewPost(postId);
+                try {
+                    const commentsSnapshot = await db.collection('posts').doc(postId).collection('comments').get();
+                    const commentDoc = commentsSnapshot.docs.find(doc => doc.data().id === commentId);
+                    
+                    if (commentDoc) {
+                        await commentDoc.ref.delete();
+                        
+                        // 댓글 카운트 감소
+                        await db.collection('posts').doc(postId).update({
+                            commentCount: firebase.firestore.FieldValue.increment(-1)
+                        });
+                        
+                        await loadFromFirebase();
+                        viewPost(postId);
+                    }
+                } catch (error) {
+                    console.error('댓글 삭제 오류:', error);
+                    alert('댓글을 삭제하는 중 오류가 발생했습니다.');
+                }
             }
         }
 
         // 초기화 실행
         init();
+
+        async function init() {
+            await loadFromFirebase();
+        }
+
+        // 글 수정 모달 열기
+        function editPost(id) {
+            const post = posts.find(p => p.id === id);
+            if (!post) return;
+
+            editingPostId = id;
+            document.getElementById('modalTitle').textContent = '글 수정';
+            document.getElementById('postTitle').value = post.title;
+            document.getElementById('postCategory').value = post.category;
+            document.getElementById('postContent').value = post.content;
+            document.getElementById('postModal').style.display = 'block';
+        }
     </script>
 </body>
 </html>
