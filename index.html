@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>내 스터디 블로그</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 30px;
+        }
+
+        .sidebar {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        .sidebar h2 {
+            color: #667eea;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .category {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .category:hover {
+            background: #f0f0f0;
+        }
+
+        .category.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .category-count {
+            background: rgba(0,0,0,0.1);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.85em;
+        }
+
+        .add-category-btn {
+            width: 100%;
+            padding: 12px;
+            background: #764ba2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 15px;
+            transition: background 0.3s;
+        }
+
+        .add-category-btn:hover {
+            background: #5a3a7d;
+        }
+
+        .content-area {
+            background: white;
+            padding: 35px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            min-height: 600px;
+        }
+
+        .post-list {
+            display: grid;
+            gap: 20px;
+        }
+
+        .post-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .post-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .post-card h3 {
+            color: #333;
+            margin-bottom: 12px;
+            font-size: 1.2em;
+        }
+
+        .post-meta {
+            display: flex;
+            gap: 15px;
+            color: #999;
+            font-size: 0.9em;
+            margin-bottom: 12px;
+        }
+
+        .post-preview {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+
+        .btn-edit {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background: #5568d3;
+        }
+
+        .btn-delete {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: #ee5a52;
+        }
+
+        .new-post-btn {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            width: 60px;
+            height: 60px;
+            background: #764ba2;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 2em;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(118, 75, 162, 0.4);
+            transition: all 0.3s;
+            z-index: 100;
+        }
+
+        .new-post-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(118, 75, 162, 0.5);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background: white;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .modal-header h2 {
+            color: #667eea;
+            font-size: 1.4em;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 2em;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            min-height: 300px;
+            resize: vertical;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+
+        .editor-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            padding: 10px;
+            background: #f5f5f5;
+            border: 2px solid #e0e0e0;
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            margin-bottom: -10px;
+        }
+
+        .toolbar-btn {
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .toolbar-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .toolbar-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .toolbar-divider {
+            width: 1px;
+            background: #ddd;
+            margin: 0 5px;
+        }
+
+        .color-picker-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .color-picker {
+            width: 30px;
+            height: 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .toolbar-group {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        #postContent {
+            border-radius: 0 0 8px 8px !important;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .post-view {
+            line-height: 1.8;
+        }
+
+        .post-view h1 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .post-view .meta-info {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            color: #666;
+        }
+
+        .post-view .content {
+            color: #444;
+            font-size: 1.05em;
+            line-height: 1.8;
+        }
+
+        .post-view .content h1 {
+            font-size: 1.8em;
+            color: #333;
+            margin: 25px 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .post-view .content h2 {
+            font-size: 1.5em;
+            color: #333;
+            margin: 20px 0 12px 0;
+        }
+
+        .post-view .content h3 {
+            font-size: 1.3em;
+            color: #333;
+            margin: 18px 0 10px 0;
+        }
+
+        .post-view .content strong {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .post-view .content ul, .post-view .content ol {
+            margin: 10px 0 10px 20px;
+            padding-left: 20px;
+        }
+
+        .post-view .content li {
+            margin: 5px 0;
+        }
+
+        .post-view .content code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+        }
+
+        .post-view .content pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        .post-view .content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .post-view .content p {
+            margin: 12px 0;
+        }
+
+        .post-view .content blockquote {
+            border-left: 4px solid #667eea;
+            padding: 10px 15px;
+            margin: 15px 0;
+            background: #f8f9fa;
+            color: #555;
+            font-style: italic;
+        }
+
+        .post-engagement {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .like-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .like-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.3s;
+        }
+
+        .like-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .like-btn.liked {
+            background: #667eea;
+            color: white;
+        }
+
+        .like-count {
+            font-weight: 600;
+        }
+
+        .comments-section {
+            margin-top: 30px;
+        }
+
+        .comments-header {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .comment-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+
+        .comment-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .comment-username {
+            flex: 0 0 150px;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.95em;
+        }
+
+        .comment-username:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .comment-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+            font-size: 0.95em;
+        }
+
+        .comment-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .comment-submit {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: background 0.3s;
+        }
+
+        .comment-submit:hover {
+            background: #5568d3;
+        }
+
+        .comments-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .comment-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 3px solid #667eea;
+        }
+
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .comment-author-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .avatar-dog { background: linear-gradient(135deg, #FFE5B4 0%, #FFD700 100%); }
+        .avatar-cat { background: linear-gradient(135deg, #FFB6C1 0%, #FF69B4 100%); }
+        .avatar-rabbit { background: linear-gradient(135deg, #FFF0F5 0%, #FFB6E1 100%); }
+        .avatar-fox { background: linear-gradient(135deg, #FF8C42 0%, #FF6347 100%); }
+        .avatar-bear { background: linear-gradient(135deg, #D2691E 0%, #8B4513 100%); }
+        .avatar-panda { background: linear-gradient(135deg, #F0F0F0 0%, #A9A9A9 100%); }
+        .avatar-koala { background: linear-gradient(135deg, #C0C0C0 0%, #808080 100%); }
+        .avatar-lion { background: linear-gradient(135deg, #F4A460 0%, #DAA520 100%); }
+        .avatar-tiger { background: linear-gradient(135deg, #FF8C00 0%, #FF6347 100%); }
+        .avatar-frog { background: linear-gradient(135deg, #98FB98 0%, #3CB371 100%); }
+        .avatar-pig { background: linear-gradient(135deg, #FFB6C1 0%, #FFC0CB 100%); }
+        .avatar-monkey { background: linear-gradient(135deg, #DEB887 0%, #CD853F 100%); }
+        .avatar-unicorn { background: linear-gradient(135deg, #E0BBE4 0%, #FEC8D8 100%); }
+        .avatar-octopus { background: linear-gradient(135deg, #B19CD9 0%, #9370DB 100%); }
+        .avatar-butterfly { background: linear-gradient(135deg, #FFDAB9 0%, #FFB6C1 100%); }
+        .avatar-bee { background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); }
+
+        .comment-username-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .current-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .comment-author {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .comment-date {
+            color: #999;
+            font-size: 0.85em;
+        }
+
+        .comment-content {
+            color: #444;
+            line-height: 1.6;
+        }
+
+        .comment-delete {
+            padding: 4px 10px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+
+        .comment-delete:hover {
+            background: #ee5a52;
+        }
+
+        .no-comments {
+            text-align: center;
+            color: #999;
+            padding: 30px;
+            font-style: italic;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state h3 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: static;
+            }
+
+            .modal-content {
+                margin: 20px;
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📚 내 스터디 블로그</h1>
+            <p class="subtitle">공부한 내용을 체계적으로 정리하고 공유합니다</p>
+        </header>
+
+        <div class="main-content">
+            <aside class="sidebar">
+                <h2>카테고리</h2>
+                <div id="categories">
+                    <div class="category active" data-category="all">
+                        <span>전체보기</span>
+                        <span class="category-count" id="count-all">0</span>
+                    </div>
+                </div>
+                <button class="add-category-btn" onclick="addCategory()">+ 카테고리 추가</button>
+            </aside>
+
+            <main class="content-area">
+                <div id="postList" class="post-list"></div>
+                <div id="postView" class="post-view" style="display: none;"></div>
+            </main>
+        </div>
+    </div>
+
+    <button class="new-post-btn" onclick="openNewPostModal()">+</button>
+
+    <!-- 글 작성/수정 모달 -->
+    <div id="postModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">새 글 작성</h2>
+                <button class="close-btn" onclick="closePostModal()">&times;</button>
+            </div>
+            <form id="postForm">
+                <div class="form-group">
+                    <label for="postTitle">제목</label>
+                    <input type="text" id="postTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="postCategory">카테고리</label>
+                    <select id="postCategory" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="postContent">내용</label>
+                    <div class="editor-toolbar">
+                        <div class="toolbar-group">
+                            <button type="button" class="toolbar-btn" onclick="insertFormat('**', '**')" title="굵게">
+                                <strong>B</strong>
+                            </button>
+                            <button type="button" class="toolbar-btn" onclick="insertFormat('*', '*')" title="기울임">
+                                <em>I</em>
+                            </button>
+                        </div>
+                        <div class="toolbar-divider"></div>
+                        <div class="toolbar-group">
+                            <button type="button" class="toolbar-btn" onclick="insertFormat('# ', '')" title="제목 1">H1</button>
+                            <button type="button" class="toolbar-btn" onclick="insertFormat('## ', '')" title="제목 2">H2</button>
+                            <button type="button" class="toolbar-btn" onclick="insertFormat('### ', '')" title="제목 3">H3</button>
+                        </div>
+                        <div class="toolbar-divider"></div>
+                        <div class="toolbar-group">
+                            <button type="button" class="toolbar-btn" onclick="insertFormat('- ', '')" title="리스트">• 리스트</button>
+                            <button type="button" class="toolbar-btn" onclick="insertFormat('> ', '')" title="인용">💬 인용</button>
+                            <button type="button" class="toolbar-btn" onclick="insertFormat('`', '`')" title="코드">&lt;/&gt; 코드</button>
+                        </div>
+                        <div class="toolbar-divider"></div>
+                        <div class="toolbar-group">
+                            <div class="color-picker-wrapper">
+                                <input type="color" id="textColor" class="color-picker" value="#ff0000" title="글자 색상">
+                                <button type="button" class="toolbar-btn" onclick="insertColor()" title="색상 적용">🎨 색상</button>
+                            </div>
+                        </div>
+                        <div class="toolbar-divider"></div>
+                        <div class="toolbar-group">
+                            <button type="button" class="toolbar-btn" onclick="insertSize('16px')" title="작은 글씨">A-</button>
+                            <button type="button" class="toolbar-btn" onclick="insertSize('20px')" title="보통 글씨">A</button>
+                            <button type="button" class="toolbar-btn" onclick="insertSize('24px')" title="큰 글씨">A+</button>
+                        </div>
+                    </div>
+                    <textarea id="postContent" required placeholder="마크다운 형식으로 작성할 수 있습니다...
+
+📝 사용 가능한 서식:
+- 굵게: **텍스트**
+- 기울임: *텍스트*
+- 제목: # 제목1, ## 제목2, ### 제목3
+- 리스트: - 항목
+- 인용: > 인용문
+- 코드: `코드`
+- 색상: 텍스트 선택 후 색상 버튼
+- 크기: 텍스트 선택 후 크기 버튼"></textarea>
+                </div>
+                <button type="submit" class="submit-btn">저장하기</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 데이터 저장소
+        let posts = JSON.parse(localStorage.getItem('studyPosts')) || [];
+        let categories = JSON.parse(localStorage.getItem('studyCategories')) || ['Network', 'AI/ML', 'Data Analysis', 'AX'];
+        let currentCategory = 'all';
+        let editingPostId = null;
+        let likes = JSON.parse(localStorage.getItem('studyLikes')) || {};
+        let comments = JSON.parse(localStorage.getItem('studyComments')) || {};
+        let currentUsername = localStorage.getItem('studyUsername') || generateRandomUsername();
+
+        // 랜덤 사용자 이름 생성
+        function generateRandomUsername() {
+            const animals = [
+                { name: '강아지', emoji: '🐶', class: 'dog' },
+                { name: '고양이', emoji: '🐱', class: 'cat' },
+                { name: '토끼', emoji: '🐰', class: 'rabbit' },
+                { name: '여우', emoji: '🦊', class: 'fox' },
+                { name: '곰', emoji: '🐻', class: 'bear' },
+                { name: '판다', emoji: '🐼', class: 'panda' },
+                { name: '코알라', emoji: '🐨', class: 'koala' },
+                { name: '사자', emoji: '🦁', class: 'lion' },
+                { name: '호랑이', emoji: '🐯', class: 'tiger' },
+                { name: '개구리', emoji: '🐸', class: 'frog' },
+                { name: '돼지', emoji: '🐷', class: 'pig' },
+                { name: '원숭이', emoji: '🐵', class: 'monkey' },
+                { name: '유니콘', emoji: '🦄', class: 'unicorn' },
+                { name: '문어', emoji: '🐙', class: 'octopus' },
+                { name: '나비', emoji: '🦋', class: 'butterfly' },
+                { name: '벌', emoji: '🐝', class: 'bee' }
+            ];
+            
+            const randomAnimal = animals[Math.floor(Math.random() * animals.length)];
+            const randomNumber = String(Math.floor(Math.random() * 90) + 10);
+            const username = randomAnimal.name + randomNumber;
+            
+            // 동물 정보 저장
+            localStorage.setItem('studyUserAnimal', JSON.stringify(randomAnimal));
+            
+            return username;
+        }
+
+        // 아바타 생성 함수
+        function getAvatarHTML(username) {
+            // 사용자명에서 동물 타입 추출
+            let animalData = JSON.parse(localStorage.getItem('studyUserAnimal'));
+            
+            // 저장된 정보가 없으면 사용자명에서 동물 찾기
+            if (!animalData) {
+                const animals = [
+                    { name: '강아지', emoji: '🐶', class: 'dog' },
+                    { name: '고양이', emoji: '🐱', class: 'cat' },
+                    { name: '토끼', emoji: '🐰', class: 'rabbit' },
+                    { name: '여우', emoji: '🦊', class: 'fox' },
+                    { name: '곰', emoji: '🐻', class: 'bear' },
+                    { name: '판다', emoji: '🐼', class: 'panda' },
+                    { name: '코알라', emoji: '🐨', class: 'koala' },
+                    { name: '사자', emoji: '🦁', class: 'lion' },
+                    { name: '호랑이', emoji: '🐯', class: 'tiger' },
+                    { name: '개구리', emoji: '🐸', class: 'frog' },
+                    { name: '돼지', emoji: '🐷', class: 'pig' },
+                    { name: '원숭이', emoji: '🐵', class: 'monkey' },
+                    { name: '유니콘', emoji: '🦄', class: 'unicorn' },
+                    { name: '문어', emoji: '🐙', class: 'octopus' },
+                    { name: '나비', emoji: '🦋', class: 'butterfly' },
+                    { name: '벌', emoji: '🐝', class: 'bee' }
+                ];
+                
+                animalData = animals.find(a => username.includes(a.name)) || animals[0];
+            }
+            
+            return `<div class="avatar avatar-${animalData.class}">${animalData.emoji}</div>`;
+        }
+
+        // 사용자 이름 저장
+        function saveUsername(username) {
+            currentUsername = username;
+            localStorage.setItem('studyUsername', username);
+        }
+
+        // 초기화
+        function init() {
+            renderCategories();
+            renderPosts();
+            updateCategoryCounts();
+        }
+
+        // 카테고리 렌더링
+        function renderCategories() {
+            const categoriesDiv = document.getElementById('categories');
+            const allCategory = categoriesDiv.querySelector('[data-category="all"]');
+            categoriesDiv.innerHTML = '';
+            categoriesDiv.appendChild(allCategory);
+
+            categories.forEach(cat => {
+                const div = document.createElement('div');
+                div.className = 'category';
+                div.dataset.category = cat;
+                div.innerHTML = `
+                    <span>${cat}</span>
+                    <span class="category-count" id="count-${cat}">0</span>
+                `;
+                div.onclick = () => filterByCategory(cat);
+                categoriesDiv.appendChild(div);
+            });
+
+            // 카테고리 선택 옵션 업데이트
+            const select = document.getElementById('postCategory');
+            select.innerHTML = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+        }
+
+        // 카테고리 추가
+        function addCategory() {
+            const name = prompt('새 카테고리 이름을 입력하세요:');
+            if (name && name.trim() && !categories.includes(name.trim())) {
+                categories.push(name.trim());
+                localStorage.setItem('studyCategories', JSON.stringify(categories));
+                renderCategories();
+                updateCategoryCounts();
+            }
+        }
+
+        // 카테고리별 필터링
+        function filterByCategory(category) {
+            currentCategory = category;
+            document.querySelectorAll('.category').forEach(cat => {
+                cat.classList.remove('active');
+                if (cat.dataset.category === category) {
+                    cat.classList.add('active');
+                }
+            });
+            renderPosts();
+        }
+
+        // 글 목록 렌더링
+        function renderPosts() {
+            const postList = document.getElementById('postList');
+            const postView = document.getElementById('postView');
+            postList.style.display = 'grid';
+            postView.style.display = 'none';
+
+            const filteredPosts = currentCategory === 'all' 
+                ? posts 
+                : posts.filter(p => p.category === currentCategory);
+
+            if (filteredPosts.length === 0) {
+                postList.innerHTML = `
+                    <div class="empty-state">
+                        <h3>😊 아직 작성된 글이 없습니다</h3>
+                        <p>오른쪽 하단의 + 버튼을 눌러 첫 글을 작성해보세요!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            postList.innerHTML = filteredPosts.sort((a, b) => b.date - a.date).map(post => `
+                <div class="post-card" onclick="viewPost(${post.id})">
+                    <h3>${post.title}</h3>
+                    <div class="post-meta">
+                        <span>📁 ${post.category}</span>
+                        <span>📅 ${new Date(post.date).toLocaleDateString('ko-KR')}</span>
+                    </div>
+                    <p class="post-preview">${post.content.substring(0, 150)}${post.content.length > 150 ? '...' : ''}</p>
+                    <div class="post-actions" onclick="event.stopPropagation()">
+                        <button class="btn btn-edit" onclick="editPost(${post.id})">수정</button>
+                        <button class="btn btn-delete" onclick="deletePost(${post.id})">삭제</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 마크다운을 HTML로 변환하는 함수
+        function parseMarkdown(text) {
+            if (!text) return '';
+            
+            let html = text;
+            
+            // 코드 블록 (```)
+            html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+            
+            // 인라인 코드 (`)
+            html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+            
+            // 헤더
+            html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
+            html = html.replace(/^## (.*$)/gm, '<h2>$1</h2>');
+            html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
+            
+            // 색상 텍스트 {color:red}텍스트{/color}
+            html = html.replace(/\{color:(.*?)\}(.*?)\{\/color\}/g, '<span style="color:$1">$2</span>');
+            
+            // 크기 텍스트 {size:20px}텍스트{/size}
+            html = html.replace(/\{size:(.*?)\}(.*?)\{\/size\}/g, '<span style="font-size:$1">$2</span>');
+            
+            // 인용구 (>)
+            html = html.replace(/^&gt; (.*$)/gm, '<blockquote>$1</blockquote>');
+            html = html.replace(/^> (.*$)/gm, '<blockquote>$1</blockquote>');
+            
+            // 굵게 (**)
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            // 기울임 (*)
+            html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            
+            // 리스트 처리
+            html = html.replace(/^\- (.*$)/gm, '<li>$1</li>');
+            html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+            
+            // 번호 리스트
+            html = html.replace(/^\d+\. (.*$)/gm, '<li>$1</li>');
+            
+            // 줄바꿈을 <br>로 변환 (리스트 내부 제외)
+            html = html.replace(/\n(?!<)/g, '<br>');
+            
+            return html;
+        }
+
+        // 글 보기
+        function viewPost(id) {
+            const post = posts.find(p => p.id === id);
+            if (!post) return;
+
+            const postList = document.getElementById('postList');
+            const postView = document.getElementById('postView');
+            
+            postList.style.display = 'none';
+            postView.style.display = 'block';
+            
+            const postLikes = likes[id] || 0;
+            const postComments = comments[id] || [];
+            const hasLiked = localStorage.getItem(`liked_${id}`) === 'true';
+            
+            postView.innerHTML = `
+                <button class="btn btn-edit" onclick="renderPosts()" style="margin-bottom: 20px;">← 목록으로</button>
+                <h1>${post.title}</h1>
+                <div class="meta-info">
+                    <span>📁 ${post.category}</span>
+                    <span>📅 ${new Date(post.date).toLocaleDateString('ko-KR')}</span>
+                </div>
+                <div class="content">${parseMarkdown(post.content)}</div>
+                <div class="post-actions" style="margin-top: 30px;">
+                    <button class="btn btn-edit" onclick="editPost(${post.id})">수정</button>
+                    <button class="btn btn-delete" onclick="deletePost(${post.id})">삭제</button>
+                </div>
+
+                <div class="post-engagement">
+                    <div class="like-section">
+                        <button class="like-btn ${hasLiked ? 'liked' : ''}" onclick="toggleLike(${id})">
+                            <span style="font-size: 1.3em;">${hasLiked ? '❤️' : '🤍'}</span>
+                            <span>공감하기</span>
+                        </button>
+                        <span class="like-count">공감 <strong>${postLikes}</strong>개</span>
+                    </div>
+
+                    <div class="comments-section">
+                        <div class="comments-header">
+                            💬 댓글 <span>${postComments.length}</span>개
+                        </div>
+
+                        <div class="comment-form">
+                            <div class="comment-username-input">
+                                ${getAvatarHTML(currentUsername)}
+                                <input type="text" 
+                                       class="comment-username" 
+                                       id="commentUsername" 
+                                       value="${currentUsername}"
+                                       onchange="saveUsername(this.value)"
+                                       placeholder="닉네임"
+                                       style="flex: 1;">
+                            </div>
+                            <textarea class="comment-textarea" 
+                                      id="commentText" 
+                                      placeholder="댓글을 입력하세요..."></textarea>
+                            <button class="comment-submit" onclick="addComment(${id})">댓글 작성</button>
+                        </div>
+
+                        <div class="comments-list" id="commentsList">
+                            ${postComments.length === 0 ? '<div class="no-comments">아직 댓글이 없습니다. 첫 댓글을 작성해보세요!</div>' : 
+                              postComments.map((comment, idx) => `
+                                <div class="comment-item">
+                                    <div class="comment-header">
+                                        <div class="comment-author-info">
+                                            ${getAvatarHTML(comment.author)}
+                                            <span class="comment-author">${comment.author}</span>
+                                        </div>
+                                        <div>
+                                            <span class="comment-date">${new Date(comment.date).toLocaleString('ko-KR')}</span>
+                                            <button class="comment-delete" onclick="deleteComment(${id}, ${idx})">삭제</button>
+                                        </div>
+                                    </div>
+                                    <div class="comment-content">${comment.content}</div>
+                                </div>
+                              `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 새 글 작성 모달 열기
+        function openNewPostModal() {
+            editingPostId = null;
+            document.getElementById('modalTitle').textContent = '새 글 작성';
+            document.getElementById('postForm').reset();
+            document.getElementById('postModal').style.display = 'block';
+        }
+
+        // 글 수정 모달 열기
+        function editPost(id) {
+            const post = posts.find(p => p.id === id);
+            if (!post) return;
+
+            editingPostId = id;
+            document.getElementById('modalTitle').textContent = '글 수정';
+            document.getElementById('postTitle').value = post.title;
+            document.getElementById('postCategory').value = post.category;
+            document.getElementById('postContent').value = post.content;
+            document.getElementById('postModal').style.display = 'block';
+        }
+
+        // 모달 닫기
+        function closePostModal() {
+            document.getElementById('postModal').style.display = 'none';
+            editingPostId = null;
+        }
+
+        // 글 저장
+        document.getElementById('postForm').onsubmit = function(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('postTitle').value;
+            const category = document.getElementById('postCategory').value;
+            const content = document.getElementById('postContent').value;
+
+            if (editingPostId !== null) {
+                // 수정
+                const post = posts.find(p => p.id === editingPostId);
+                post.title = title;
+                post.category = category;
+                post.content = content;
+                post.date = Date.now();
+            } else {
+                // 새 글
+                const newPost = {
+                    id: Date.now(),
+                    title,
+                    category,
+                    content,
+                    date: Date.now()
+                };
+                posts.push(newPost);
+            }
+
+            localStorage.setItem('studyPosts', JSON.stringify(posts));
+            closePostModal();
+            renderPosts();
+            updateCategoryCounts();
+        };
+
+        // 글 삭제
+        function deletePost(id) {
+            if (confirm('정말 삭제하시겠습니까?')) {
+                posts = posts.filter(p => p.id !== id);
+                localStorage.setItem('studyPosts', JSON.stringify(posts));
+                renderPosts();
+                updateCategoryCounts();
+            }
+        }
+
+        // 카테고리별 글 개수 업데이트
+        function updateCategoryCounts() {
+            document.getElementById('count-all').textContent = posts.length;
+            categories.forEach(cat => {
+                const count = posts.filter(p => p.category === cat).length;
+                const countEl = document.getElementById(`count-${cat}`);
+                if (countEl) countEl.textContent = count;
+            });
+        }
+
+        // 모달 외부 클릭시 닫기
+        window.onclick = function(event) {
+            const modal = document.getElementById('postModal');
+            if (event.target === modal) {
+                closePostModal();
+            }
+        };
+
+        // 에디터 서식 기능
+        function insertFormat(before, after) {
+            const textarea = document.getElementById('postContent');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const selectedText = textarea.value.substring(start, end);
+            const replacement = before + selectedText + after;
+            
+            textarea.value = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
+            
+            // 커서 위치 조정
+            const newPos = start + before.length + selectedText.length;
+            textarea.focus();
+            textarea.setSelectionRange(newPos, newPos);
+        }
+
+        function insertColor() {
+            const color = document.getElementById('textColor').value;
+            const textarea = document.getElementById('postContent');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const selectedText = textarea.value.substring(start, end);
+            
+            if (!selectedText) {
+                alert('색상을 적용할 텍스트를 먼저 선택해주세요!');
+                return;
+            }
+            
+            const replacement = `{color:${color}}${selectedText}{/color}`;
+            textarea.value = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
+            
+            textarea.focus();
+        }
+
+        function insertSize(size) {
+            const textarea = document.getElementById('postContent');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const selectedText = textarea.value.substring(start, end);
+            
+            if (!selectedText) {
+                alert('크기를 적용할 텍스트를 먼저 선택해주세요!');
+                return;
+            }
+            
+            const replacement = `{size:${size}}${selectedText}{/size}`;
+            textarea.value = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
+            
+            textarea.focus();
+        }
+
+        // 공감 토글
+        function toggleLike(postId) {
+            const hasLiked = localStorage.getItem(`liked_${postId}`) === 'true';
+            
+            if (hasLiked) {
+                likes[postId] = (likes[postId] || 1) - 1;
+                localStorage.removeItem(`liked_${postId}`);
+            } else {
+                likes[postId] = (likes[postId] || 0) + 1;
+                localStorage.setItem(`liked_${postId}`, 'true');
+            }
+            
+            localStorage.setItem('studyLikes', JSON.stringify(likes));
+            viewPost(postId);
+        }
+
+        // 댓글 추가
+        function addComment(postId) {
+            const username = document.getElementById('commentUsername').value.trim();
+            const content = document.getElementById('commentText').value.trim();
+            
+            if (!username) {
+                alert('닉네임을 입력해주세요!');
+                return;
+            }
+            
+            if (!content) {
+                alert('댓글 내용을 입력해주세요!');
+                return;
+            }
+            
+            if (!comments[postId]) {
+                comments[postId] = [];
+            }
+            
+            comments[postId].push({
+                author: username,
+                content: content,
+                date: Date.now()
+            });
+            
+            localStorage.setItem('studyComments', JSON.stringify(comments));
+            saveUsername(username);
+            viewPost(postId);
+        }
+
+        // 댓글 삭제
+        function deleteComment(postId, commentIndex) {
+            if (confirm('댓글을 삭제하시겠습니까?')) {
+                comments[postId].splice(commentIndex, 1);
+                localStorage.setItem('studyComments', JSON.stringify(comments));
+                viewPost(postId);
+            }
+        }
+
+        // 초기화 실행
+        init();
+    </script>
+</body>
+</html>
